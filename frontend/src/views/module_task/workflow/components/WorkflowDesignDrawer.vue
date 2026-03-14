@@ -1,4 +1,4 @@
-<!-- <template>
+<template>
   <el-drawer
     v-model="dialogVisible"
     :title="drawerTitle"
@@ -188,9 +188,9 @@
       </div>
     </template>
   </el-drawer>
-</template> -->
+</template>
 
-<!-- <script setup lang="ts">
+<script setup lang="ts">
 import { ref, reactive, watch, computed, onMounted, markRaw, type Component } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { Panel, VueFlow, useVueFlow } from "@vue-flow/core";
@@ -749,6 +749,132 @@ const handleFinish = async () => {
 const handleClose = () => {
   emit("update:visible", false);
 };
+
+// 历史记录管理
+const history = ref<{ nodes: Node[]; edges: Edge[] }[]>([]);
+const historyIndex = ref(-1);
+
+function saveToHistory(nodesData: Node[], edgesData: Edge[]) {
+  history.value = history.value.slice(0, historyIndex.value + 1);
+  history.value.push({ nodes: nodesData, edges: edgesData });
+  historyIndex.value = history.value.length - 1;
+}
+
+// 拖拽相关函数
+function onDragStart(event: DragEvent, node: LoadedNodeType) {
+  if (event.dataTransfer) {
+    event.dataTransfer.setData("application/vueflow", JSON.stringify(node));
+    event.dataTransfer.effectAllowed = "move";
+  }
+}
+
+function onDragEnd() {
+  // 拖拽结束
+}
+
+function onDragOver(event: DragEvent) {
+  event.preventDefault();
+  if (event.dataTransfer) {
+    event.dataTransfer.dropEffect = "move";
+  }
+}
+
+function handleNodeDrop(
+  event: DragEvent,
+  screenToFlowCoordinate: (position: { x: number; y: number }) => { x: number; y: number },
+  onNodesInitialized: (callback: () => void) => void,
+  updateNode: (id: string, node: Partial<Node>) => void,
+  addNodes: (nodes: Node[]) => void
+) {
+  const data = event.dataTransfer?.getData("application/vueflow");
+  if (!data) return;
+
+  const nodeType = JSON.parse(data);
+  const position = screenToFlowCoordinate({ x: event.clientX, y: event.clientY });
+
+  const newNode: Node = {
+    id: `node-${Date.now()}`,
+    type: nodeType.type,
+    position,
+    data: {
+      label: nodeType.name,
+      type: nodeType.type,
+      category: nodeType.category,
+      args: nodeType.args,
+      kwargs: nodeType.kwargs,
+    },
+  };
+
+  addNodes([newNode]);
+}
+
+// 节点操作函数
+function updateNodeData(
+  nodeId: string,
+  data: any,
+  getNodes: () => Node[],
+  setNodes: (nodes: Node[]) => void
+) {
+  const currentNodes = getNodes();
+  const nodeIndex = currentNodes.findIndex((n) => n.id === nodeId);
+  if (nodeIndex === -1) return false;
+
+  const updatedNodes = [...currentNodes];
+  updatedNodes[nodeIndex] = {
+    ...updatedNodes[nodeIndex],
+    data: {
+      ...updatedNodes[nodeIndex].data,
+      ...data,
+    },
+  };
+  setNodes(updatedNodes);
+  return true;
+}
+
+function deleteNode(
+  nodeId: string,
+  getNodes: () => Node[],
+  setNodes: (nodes: Node[]) => void,
+  getEdges: () => Edge[],
+  setEdges: (edges: Edge[]) => void
+) {
+  const currentNodes = getNodes();
+  const currentEdges = getEdges();
+  const filteredNodes = currentNodes.filter((n) => n.id !== nodeId);
+  const filteredEdges = currentEdges.filter((e) => e.source !== nodeId && e.target !== nodeId);
+  setNodes(filteredNodes);
+  setEdges(filteredEdges);
+}
+
+// 边操作函数
+function updateEdgeData(
+  edgeId: string,
+  data: any,
+  getEdges: () => Edge[],
+  setEdges: (edges: Edge[]) => void
+) {
+  const currentEdges = getEdges();
+  const edgeIndex = currentEdges.findIndex((e) => e.id === edgeId);
+  if (edgeIndex === -1) return false;
+
+  const updatedEdges = [...currentEdges];
+  updatedEdges[edgeIndex] = {
+    ...updatedEdges[edgeIndex],
+    ...data,
+    data: {
+      ...updatedEdges[edgeIndex].data,
+      ...data,
+    },
+  };
+  setEdges(updatedEdges);
+  return true;
+}
+
+function deleteEdge(edgeId: string, getEdges: () => Edge[], setEdges: (edges: Edge[]) => void) {
+  const currentEdges = getEdges();
+  const filteredEdges = currentEdges.filter((e) => e.id !== edgeId);
+  setEdges(filteredEdges);
+}
 </script>
 
 <style scoped lang="scss">
@@ -844,4 +970,4 @@ const handleClose = () => {
   gap: 12px;
   justify-content: flex-end;
 }
-</style> -->
+</style>
