@@ -38,5 +38,6 @@ psycopg-binary==3.3.2                   # postgresql 异步操作数据库基于
 psycopg==3.3.2                          # postgresql 同步操作数据库基于 psycopg是psycopg2升级版：psycopg2 是一个 pure-Python PostgreSQL 适配器。
 aiosqlite==0.17.0                       # sqlite 异步操作数据库,同步是python自带sqlite无需额外库
 agno==2.5.8                             # 大模型开发框架
+openai==2.28.0                          # openai 接口
 ruff==0.14.13                           # 代码格式化
 pytest==9.0.2                           # 测试框架
